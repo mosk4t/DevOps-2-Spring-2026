@@ -1,0 +1,53 @@
+---
+- name: Lab 1 Perfection - Setup Docker & Apps
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install system dependencies
+      apt:
+        name: [curl, gnupg, lsb-release, ca-certificates]
+        state: present
+        update_cache: yes
+
+    - name: Create keyring directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add Docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes
+
+    - name: Add Docker Repository
+      shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    - name: Install Docker Engine
+      apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+        state: present
+        update_cache: yes
+
+    - name: Install Docker SDK for Python
+      apt:
+        name: python3-docker
+        state: present
+
+    - name: Run PostgreSQL Database
+      community.docker.docker_container:
+        name: my-postgres
+        image: postgres:13
+        restart_policy: always
+        env:
+          POSTGRES_PASSWORD: "admin"
+        ports:
+          - "5432:5432"
+
+    - name: Run Nginx Web Server
+      community.docker.docker_container:
+        name: my-nginx
+        image: nginx:latest
+        restart_policy: always
+        ports:
+          - "80:80"
