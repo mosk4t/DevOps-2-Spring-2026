@@ -1,19 +1,26 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: prod-pod
+  name: lab3-static-pod
 spec:
-  restartPolicy: Always
+  hostNetwork: true
   volumes:
-  - name: web-root
+  - name: shared-data
     emptyDir: {}
   containers:
-  - name: nginx
+  - name: my-nginx
     image: nginx:latest
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "100m"
+      limits:
+        memory: "128Mi"
+        cpu: "200m"
     volumeMounts:
-    - name: web-root
+    - name: shared-data
       mountPath: /usr/share/nginx/html
-  - name: scraper
+  - name: my-scraper
     image: alpine:latest
     command: ["/bin/sh", "-c"]
     args:
@@ -23,6 +30,13 @@ spec:
           curl -s https://raw.githubusercontent.com/kubernetes/kubernetes/master/README.md > /usr/share/nginx/html/index.html;
           sleep 10;
         done
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
     volumeMounts:
-    - name: web-root
+    - name: shared-data
       mountPath: /usr/share/nginx/html
